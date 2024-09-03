@@ -1,12 +1,15 @@
+from typing import Annotated
+
 from fastapi import APIRouter,Depends,HTTPException,status,Path
 from pydantic import BaseModel,Field
 from models import Todos
 from datbase import SessionLocal
 from sqlalchemy.orm import Session
+from .auth import get_current_user
 router = APIRouter()
 
 
-
+user_dependency= Annotated[dict,Depends(get_current_user)]
 def get_db():
     db = SessionLocal()
     try:
@@ -21,23 +24,27 @@ class TodoRequest(BaseModel):
     complete: bool
 
 
-@router.get('/')
-async def get_all(db: Session = Depends(get_db)):
-    return db.query(Todos).all()
+@router.get('/',status_code=status.HTTP_201_CREATED)
+async def get_all(user:user_dependency,db: Session = Depends(get_db)):
+    if user is None:
+        raise HTTPException(401, 'auth failed')
+    return db.query(Todos).filter(Todos.owner_id == user.get('id')).all()
 
 #get partical record
 @router.get('/todo/{todo_id}')
-async def read_todo(todo_id:int=Path(gt=0),
-                    db: Session = Depends(get_db),
-                    status_code=status.HTTP_200_OK):
-    todo_model = db.query(Todos).filter(Todos.id==todo_id).first()
+async def read_todo(user: user_dependency,todo_id:int=Path(gt=0),
+                    db: Session = Depends(get_db)):
+    todo_model = db.query(Todos).filter(Todos.id == todo_id).filter(Todos.owner_id == user.get('id')).first()
     if todo_model is not None:
         return todo_model
     raise HTTPException(404,'todo not found')
 
 @router.post("/todo",status_code=status.HTTP_201_CREATED)
-async def create_todo(todo_request:TodoRequest,db: Session = Depends(get_db)):
-    todo_model = Todos(**todo_request.dict())
+async def create_todo(user: user_dependency,todo_request:TodoRequest,db: Session = Depends(get_db)):
+
+    if user is None:
+        raise HTTPException(401, 'auth failed')
+    todo_model = Todos(**todo_request.dict(),owner_id=user.get('id'))
 
     db.add(todo_model)
     db.commit()
