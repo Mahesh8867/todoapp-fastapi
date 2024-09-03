@@ -37,9 +37,9 @@ async def read_todo(todo_id:int=Path(gt=0),
 
 @router.post("/todo",status_code=status.HTTP_201_CREATED)
 async def create_todo(todo_request:TodoRequest,db: Session = Depends(get_db)):
-    todo_model = Todos(**todo_request.dict())
+    todo_models = Todos(**todo_request.dict())
 
-    db.add(todo_model)
+    db.add(todo_models)
     db.commit()
 
 
