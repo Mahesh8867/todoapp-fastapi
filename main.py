@@ -1,6 +1,3 @@
-from fastapi import FastAPI
-import models
-
 from datbase import engine
 import models
 from routers import auth,todos

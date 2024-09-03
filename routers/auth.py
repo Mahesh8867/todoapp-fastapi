@@ -4,6 +4,7 @@ from models import Users
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from passlib.context import CryptContext
+from fastapi.security import OAuth2PasswordRequestForm
 router = APIRouter()
 bcrypt_context = CryptContext(schemes=['bcrypt'],deprecated='auto')
 
@@ -34,3 +35,6 @@ async def create_user(create_user_request:CreateUserRequest,db: Session = Depend
     db.add(create_user_model)
     db.commit()
 
+@router.post('/token')
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    return 'token'
