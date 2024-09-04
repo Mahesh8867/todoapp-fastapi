@@ -75,7 +75,6 @@ async def create_user(create_user_request:CreateUserRequest,db: Session = Depend
         first_name=create_user_request.first_name,
         last_name=create_user_request.last_name,
         role=create_user_request.role,
-        phone_number=create_user_request.phone_number,
         hashed_password=bcrypt_context.hash(create_user_request.password),
         is_active=True
     )
@@ -87,5 +86,5 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     user=authincate_user(form_data.username, form_data.password,db)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail='could not validate user')
-    token = create_access_token(user.username,user.id,user.role,timedelta(minutes=20))
+    token = create_access_token(user.username,user.id,timedelta(minutes=20))
     return {'access_token':token,'token_type':'bearer'}
